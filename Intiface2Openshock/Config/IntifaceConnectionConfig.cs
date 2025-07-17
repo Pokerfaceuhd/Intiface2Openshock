@@ -1,4 +1,4 @@
-﻿namespace OpenShock.LocalRelay.Config;
+﻿namespace Intiface2Openshock.Config;
 
 public sealed class IntifaceConnectionConfig
 {

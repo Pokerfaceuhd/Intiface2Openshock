@@ -1,6 +1,6 @@
 ﻿using System.IO.Ports;
 
-namespace OpenShock.LocalRelay.Services;
+namespace Intiface2Openshock.Services;
 
 public sealed class SerialService : IDisposable
 {

@@ -8,14 +8,11 @@ using System.Threading.Channels;
 using CircularBuffer;
 using Intiface2Openshock.Utils;
 using Microsoft.Extensions.Logging;
-using OpenShock.Desktop.ModuleBase.Api;
-using OpenShock.Desktop.ModuleBase.Config;
-using OpenShock.LocalRelay.Config;
-using OpenShock.LocalRelay.Models.Serial;
+using Intiface2Openshock.Models.Serial;
 using OpenShock.MinimalEvents;
 using OpenShock.Serialization.Types;
 
-namespace OpenShock.LocalRelay;
+namespace Intiface2Openshock;
 
 public sealed class SerialPortClient : IAsyncDisposable
 {

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using OpenShock.Serialization.Types;
 
-namespace OpenShock.LocalRelay.Models.Serial;
+namespace Intiface2Openshock.Models.Serial;
 
 public sealed class RfTransmit
 {

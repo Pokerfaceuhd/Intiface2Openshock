@@ -4,14 +4,14 @@ using LucHeart.WebsocketLibrary;
 using Microsoft.Extensions.Logging;
 using OpenShock.Desktop.ModuleBase.Api;
 using OpenShock.Desktop.ModuleBase.Config;
-using OpenShock.LocalRelay.Config;
-using OpenShock.LocalRelay.Models.Serial;
+using Intiface2Openshock.Config;
+using Intiface2Openshock.Models.Serial;
 using OpenShock.MinimalEvents;
 using OpenShock.SDK.CSharp.Updatables;
 using OpenShock.Serialization.Gateway;
 using OpenShock.Serialization.Types;
 
-namespace OpenShock.LocalRelay.Services;
+namespace Intiface2Openshock.Services;
 
 public sealed class FlowManager
 {

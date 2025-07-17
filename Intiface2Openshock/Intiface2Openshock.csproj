@@ -4,13 +4,12 @@
         <SingleProject>true</SingleProject>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>OpenShock.LocalRelay</AssemblyName>
-        <RootNamespace>OpenShock.LocalRelay</RootNamespace>
-        <Company>OpenShock</Company>
+        <AssemblyName>Intiface2Openshock</AssemblyName>
+        <RootNamespace>Intiface2Openshock</RootNamespace>
         <AssemblyVersion>1.0.0.0</AssemblyVersion>
-        <ApplicationTitle>LocalRelay</ApplicationTitle>
+        <ApplicationTitle>Intiface2Openshock</ApplicationTitle>
         <Version>1.0.0-preview.3</Version>
-        <Product>LocalRelay</Product>
+        <Product>Intiface2Openshock</Product>
         <TargetFramework>net9.0</TargetFramework>
 
         <Configurations>Release;Debug</Configurations>
@@ -58,4 +57,11 @@
         <ServerGarbageCollection>false</ServerGarbageCollection>
     </PropertyGroup>
 
+    <Target Name="CopyOwnDllOnly" AfterTargets="Build">
+        <ItemGroup>
+            <OwnDll Include="$(TargetPath)" />
+        </ItemGroup>
+        <Copy SourceFiles="@(OwnDll)" DestinationFolder="C:\Users\Luna\AppData\Roaming\OpenShock\Desktop\modules\intiface2openshock" />
+    </Target>
+    
 </Project>

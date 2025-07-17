@@ -1,7 +1,7 @@
 ﻿using OpenShock.Desktop.ModuleBase.Models;
 using OpenShock.Serialization.Types;
 
-namespace OpenShock.LocalRelay.Config;
+namespace Intiface2Openshock.Config;
 
 public sealed class ShockerConfig
 {

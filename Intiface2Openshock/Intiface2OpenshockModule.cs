@@ -4,14 +4,14 @@ using MudBlazor;
 using OpenShock.Desktop.ModuleBase;
 using OpenShock.Desktop.ModuleBase.Config;
 using OpenShock.Desktop.ModuleBase.Navigation;
-using OpenShock.LocalRelay;
-using OpenShock.LocalRelay.Config;
-using OpenShock.LocalRelay.Services;
-using OpenShock.LocalRelay.Ui.Pages.Dash.Tabs;
+using Intiface2Openshock.Config;
+using Intiface2Openshock.Services;
+using Intiface2Openshock;
+using Intiface2Openshock.Ui.Pages.Dash.Tabs;
 
-[assembly:DesktopModule(typeof(Intiface2OpenshockModule), "OpenShock.Intiface2Openshock", "Intiface2Openshock")]
+[assembly:DesktopModule(typeof(Intiface2OpenshockModule), "Intiface2Openshock", "Intiface2Openshock")]
 
-namespace OpenShock.LocalRelay;
+namespace Intiface2Openshock;
 
 public class Intiface2OpenshockModule : DesktopModuleBase
 {
