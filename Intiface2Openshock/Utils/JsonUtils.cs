@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace OpenShock.LocalRelay.Utils;
+namespace Intiface2Openshock.Utils;
 
 public static class JsonUtils
 {

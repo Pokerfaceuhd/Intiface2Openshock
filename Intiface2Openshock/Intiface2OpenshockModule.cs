@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MudBlazor;
 using OpenShock.Desktop.ModuleBase;
@@ -10,20 +9,20 @@ using OpenShock.LocalRelay.Config;
 using OpenShock.LocalRelay.Services;
 using OpenShock.LocalRelay.Ui.Pages.Dash.Tabs;
 
-[assembly:DesktopModule(typeof(LocalRelayModule), "OpenShock.LocalRelay", "Local Relay")]
+[assembly:DesktopModule(typeof(Intiface2OpenshockModule), "OpenShock.Intiface2Openshock", "Intiface2Openshock")]
 
 namespace OpenShock.LocalRelay;
 
-public class LocalRelayModule : DesktopModuleBase
+public class Intiface2OpenshockModule : DesktopModuleBase
 {
-    public override string IconPath => "OpenShock/LocalRelay/Resources/LocalRelay-Icon.png";
+    public override string IconPath => "OpenShock/Intiface2Openshock/Resources/Intiface2Openshock-Icon.png";
 
     public override IReadOnlyCollection<NavigationItem> NavigationComponents { get; } =
     [
         new()
         {
-            Name = "Hub",
-            ComponentType = typeof(HubTab),
+            Name = "Settings",
+            ComponentType = typeof(SettingsTab),
             Icon = IconOneOf.FromSvg(Icons.Material.Filled.Hub)
         },
         new()
@@ -36,12 +35,12 @@ public class LocalRelayModule : DesktopModuleBase
 
     public override async Task Setup()
     {
-        var config = await ModuleInstanceManager.GetModuleConfig<LocalRelayConfig>();
+        var config = await ModuleInstanceManager.GetModuleConfig<Intiface2OpenshockConfig>();
         ModuleServiceProvider = BuildServices(config);
         
     }
 
-    private ServiceProvider BuildServices(IModuleConfig<LocalRelayConfig> config)
+    private ServiceProvider BuildServices(IModuleConfig<Intiface2OpenshockConfig> config)
     {
         var loggerFactory = ModuleInstanceManager.AppServiceProvider.GetRequiredService<ILoggerFactory>();
         

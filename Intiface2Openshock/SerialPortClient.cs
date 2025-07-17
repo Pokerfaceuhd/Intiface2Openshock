@@ -6,11 +6,14 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 using CircularBuffer;
+using Intiface2Openshock.Utils;
 using Microsoft.Extensions.Logging;
+using OpenShock.Desktop.ModuleBase.Api;
+using OpenShock.Desktop.ModuleBase.Config;
+using OpenShock.LocalRelay.Config;
 using OpenShock.LocalRelay.Models.Serial;
-using OpenShock.LocalRelay.Utils;
 using OpenShock.MinimalEvents;
-using OpenShock.SDK.CSharp.Utils;
+using OpenShock.Serialization.Types;
 
 namespace OpenShock.LocalRelay;
 
@@ -22,7 +25,7 @@ public sealed class SerialPortClient : IAsyncDisposable
     private CancellationTokenSource? _currentCts;
     private CancellationTokenSource _linkedCts;
     private readonly Subject<byte> _terminalUpdate = new();
-
+    
     public readonly CircularBuffer<string> RxConsoleBuffer = new(1000);
 
     public IAsyncMinimalEventObservable OnConsoleBufferUpdate => _onConsoleBufferUpdate;
@@ -30,9 +33,8 @@ public sealed class SerialPortClient : IAsyncDisposable
 
     public IAsyncMinimalEventObservable OnClose => _onClose;
     private readonly AsyncMinimalEvent _onClose = new();
+    private Dictionary<ushort, LiveControlShocker> _liveControlShockers = new();
     
-
-
     private readonly Channel<byte[]> _txChannel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
     {
         SingleReader = true
@@ -93,6 +95,8 @@ public sealed class SerialPortClient : IAsyncDisposable
             
             await _onClose.InvokeAsyncParallel();
         });
+
+        OsTask.Run(LiveControlCheck);
 #pragma warning restore CS4014
     }
 
@@ -241,6 +245,41 @@ public sealed class SerialPortClient : IAsyncDisposable
         }
     }
 
+    public void LiveControl(IEnumerable<(ushort, ShockerModelType)> shockers, byte intensity, ShockerCommandType type)
+    {
+        shockers.Select(shocker => new LiveControlShocker()
+            {
+                Id = shocker.Item1,
+                Model = shocker.Item2,
+                Intensity = intensity,
+                Type = type,
+            })
+            .ToList()
+            .ForEach(shocker => _liveControlShockers[shocker.Id] = shocker);
+    }
+
+    public void KillLiveControl()
+    {
+        _liveControlShockers = new();
+    }
+    
+    private async Task LiveControlCheck()
+    {
+        while (_serialPort.IsOpen && !_linkedCts.IsCancellationRequested)
+        {
+            var rfTransmits = _liveControlShockers.Values.Select(shocker => Control(new RfTransmit
+            {
+                Id = shocker.Id,
+                Model = shocker.Model,
+                Intensity = shocker.Intensity,
+                Type = shocker.Type,
+                DurationMs = 200
+            }));
+            
+            await Task.WhenAll(rfTransmits);
+        }
+    }
+    
 
     public async Task Close()
     {

@@ -53,7 +53,7 @@
 @code {
     [ModuleInject] private FlowManager FlowManager { get; set; } = null!;
     [ModuleInject] private SerialService SerialService { get; set; } = null!;
-    [ModuleInject] private IModuleConfig<LocalRelayConfig> ModuleConfig { get; set; } = null!;
+    [ModuleInject] private IModuleConfig<Intiface2OpenshockConfig> ModuleConfig { get; set; } = null!;
     
     private string? _selectedSerialPort;
     private string[] _serialPorts = [];
