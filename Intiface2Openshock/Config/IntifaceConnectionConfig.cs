@@ -8,9 +8,9 @@ public sealed class IntifaceConnectionConfig
 
 public sealed class IntifaceConnectionStartupMessage
 {
-    public string Identifier { get; set; } = "Openshock";
-    public string Address { get; set; } = $"Openshocki{Random.Shared.Next().ToString()}";
-    public ushort Version { get; set; } = 0;
+    public string identifier { get; set; } = "Openshock";
+    public string address { get; set; } = Random.Shared.Next().ToString();
+    public ushort version { get; set; } = 0;
 }
 
 public enum IntifaceProtocolType: byte

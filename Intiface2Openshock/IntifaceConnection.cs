@@ -89,7 +89,8 @@ public sealed class IntifaceConnection : IAsyncDisposable
             _state.Value = WebsocketConnectionState.Connected;
             _connectedAt = DateTimeOffset.UtcNow;
 
-            String json = JsonSerializer.Serialize(_config.Config.IntifaceConnection);
+            String json = JsonSerializer.Serialize(_config.Config.IntifaceConnection.StartupMessage);
+            _logger.LogInformation("Starting Intiface connection with: {Json}", json);
             SendUtf8(json);
             
             OsTask.Run(ReceiveLoop, _linked.Token);
@@ -98,7 +99,7 @@ public sealed class IntifaceConnection : IAsyncDisposable
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error while connecting, retrying in 3 seconds");
+            _logger.LogError(e, "Error while connecting, retrying in 10 seconds");
         }
 
         await Reconnect();
@@ -107,18 +108,19 @@ public sealed class IntifaceConnection : IAsyncDisposable
     
     private async Task Reconnect()
     {
-        _logger.LogWarning("Reconnecting in 3 seconds");
+        _logger.LogWarning("Reconnecting in 10 seconds");
         
         _state.Value = WebsocketConnectionState.Connecting;
         _clientWebSocket?.Abort();
         _clientWebSocket?.Dispose();
-        await Task.Delay(3000, _dispose.Token);
+        await Task.Delay(10000, _dispose.Token);
         OsTask.Run(ConnectAsync, _dispose.Token);
     }
 
     private async Task SendUtf8(string message)
     {
         var buffer = Encoding.UTF8.GetBytes(message);
+        _logger.LogInformation("Sending UTF8 message: {Message}", message);
         await _clientWebSocket!.SendAsync(buffer, WebSocketMessageType.Text, true, _linked.Token);
     }
     
@@ -135,7 +137,20 @@ public sealed class IntifaceConnection : IAsyncDisposable
                 }
                 
                 var buffer = new byte[1024];
-                await _clientWebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), _linked.Token);
+                
+                if (_clientWebSocket.State != WebSocketState.Open)
+                {
+                    _logger.LogWarning("Connection closed");
+                    break;
+                }
+                
+                var result = await _clientWebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), _linked.Token);
+                
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    await _clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closure during message read",
+                        _linked.Token);
+                }
                 
                 lastMessage = DateTime.UtcNow;
                 
@@ -173,7 +188,7 @@ public sealed class IntifaceConnection : IAsyncDisposable
         _clientWebSocket?.Abort();
         _clientWebSocket?.Dispose();
 
-        await Task.Delay(3000, _dispose.Token);
+        await Task.Delay(10000, _dispose.Token);
 
         OsTask.Run(ConnectAsync, _dispose.Token);
     }

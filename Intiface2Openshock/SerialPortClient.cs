@@ -30,7 +30,6 @@ public sealed class SerialPortClient : IAsyncDisposable
 
     public IAsyncMinimalEventObservable OnClose => _onClose;
     private readonly AsyncMinimalEvent _onClose = new();
-    private Dictionary<ushort, LiveControlShocker> _liveControlShockers = new();
     
     private readonly Channel<byte[]> _txChannel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
     {
@@ -92,8 +91,6 @@ public sealed class SerialPortClient : IAsyncDisposable
             
             await _onClose.InvokeAsyncParallel();
         });
-
-        OsTask.Run(LiveControlCheck);
 #pragma warning restore CS4014
     }
 
@@ -241,43 +238,7 @@ public sealed class SerialPortClient : IAsyncDisposable
             _logger.LogError(e, "Error during Control");
         }
     }
-
-    public void LiveControl(IEnumerable<(ushort, ShockerModelType)> shockers, byte intensity, ShockerCommandType type)
-    {
-        shockers.Select(shocker => new LiveControlShocker()
-            {
-                Id = shocker.Item1,
-                Model = shocker.Item2,
-                Intensity = intensity,
-                Type = type,
-            })
-            .ToList()
-            .ForEach(shocker => _liveControlShockers[shocker.Id] = shocker);
-    }
-
-    public void KillLiveControl()
-    {
-        _liveControlShockers = new();
-    }
     
-    private async Task LiveControlCheck()
-    {
-        while (_serialPort.IsOpen && !_linkedCts.IsCancellationRequested)
-        {
-            var rfTransmits = _liveControlShockers.Values.Select(shocker => Control(new RfTransmit
-            {
-                Id = shocker.Id,
-                Model = shocker.Model,
-                Intensity = shocker.Intensity,
-                Type = shocker.Type,
-                DurationMs = 200
-            }));
-            
-            await Task.WhenAll(rfTransmits);
-        }
-    }
-    
-
     public async Task Close()
     {
         _logger.LogDebug("Closing serial port {PortName}", _serialPort.PortName);
