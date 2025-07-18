@@ -37,13 +37,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget
 
-      - name: Publish LocalRelay
-        run: dotnet publish LocalRelay/LocalRelay.csproj -c Release -o ./publish/
+      - name: Publish Intiface2Openshock
+    
+        run: dotnet publish Intiface2OpenShock/Intiface2OpenShock.csproj -c Release -o ./publish/
 
       - name: Upload LocalRelay artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: LocalRelay
+          name: Intiface2OpenShock
           path: publish/*
           retention-days: 1
           if-no-files-found: error
