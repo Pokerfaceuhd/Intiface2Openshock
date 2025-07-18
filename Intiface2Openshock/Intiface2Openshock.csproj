@@ -50,7 +50,7 @@
 
     <ItemGroup>
       <None Remove="Resources\Intiface2Openshock-Icon.png" />
-        <EmbeddedResource Include="Resources\Intiface2Openshock-Icon.png" />
+      <EmbeddedResource Include="Resources\Intiface2Openshock-Icon.png" />
     </ItemGroup>
     
     <PropertyGroup>

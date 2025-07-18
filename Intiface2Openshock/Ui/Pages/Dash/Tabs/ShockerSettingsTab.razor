@@ -7,7 +7,6 @@
 @using Intiface2Openshock.Config
 @using Intiface2Openshock.Services
 @using OpenShock.Desktop.ModuleBase.Models
-@implements IAsyncDisposable
 
 @page "/dash/settings"
 
@@ -32,27 +31,18 @@
             <MudSelectItem Value="@type">@type</MudSelectItem>
         }
     </MudSelect>
-    <div>
-        <MudIcon Color="GetConnectionStateColor(FlowManager.State.Value)" Icon="@Icons.Material.Filled.CheckCircle"></MudIcon>
-        @FlowManager.State.Value
-    </div>
-
 </MudPaper>
 
 @code {
     
     [ModuleInject] private IOpenShockService OpenShockService { get; set; } = null!;
-    [ModuleInject] private FlowManager FlowManager { get; set; } = null!;
     [ModuleInject] private IModuleConfig<Intiface2OpenshockConfig> ModuleConfig { get; set; } = null!;
 
     private HashSet<Guid> _selectedShockers = [];
     
-    private IAsyncDisposable _flowUpdatedSubscription = null!;
-
     protected override async Task OnInitializedAsync()
     {
         _selectedShockers = [..ModuleConfig.Config.Shocker.Shockers];
-        _flowUpdatedSubscription = await FlowManager.State.Updated.SubscribeAsync(state => InvokeAsync(StateHasChanged));
     }
 
     private void OnSelectedShockersUpdate()
@@ -65,19 +55,4 @@
     {
         ModuleConfig.SaveDeferred();
     }
-    
-    private static Color GetConnectionStateColor(WebsocketConnectionState state) =>
-        state switch
-        {
-            WebsocketConnectionState.Connected => Color.Success,
-            WebsocketConnectionState.Connecting => Color.Warning,
-            WebsocketConnectionState.WaitingForReconnect => Color.Tertiary,
-            _ => Color.Error
-        };
-    
-    public async ValueTask DisposeAsync()
-    {
-        await _flowUpdatedSubscription.DisposeAsync();
-    }
-
 }

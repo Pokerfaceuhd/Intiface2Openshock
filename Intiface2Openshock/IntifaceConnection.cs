@@ -94,11 +94,15 @@ public sealed class IntifaceConnection : IAsyncDisposable
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error while connecting, retrying in 10 seconds");
+            _logger.LogError(e, "Error while connecting, not reconnecting (is Intiface running?)");
         }
+        
+        _state.Value = WebsocketConnectionState.Disconnected;
+        
+        _clientWebSocket?.Abort();
+        _clientWebSocket?.Dispose();
 
-        await Reconnect();
-        return new Reconnecting();
+        return new Disposed();
     }
     
     private async Task Reconnect()
@@ -175,16 +179,8 @@ public sealed class IntifaceConnection : IAsyncDisposable
             _logger.LogDebug("Dispose requested, not reconnecting");
             return;
         }
-
-        _logger.LogWarning("Lost websocket connection, trying to reconnect in 10 seconds");
-        _state.Value = WebsocketConnectionState.Connecting;
-
-        _clientWebSocket?.Abort();
-        _clientWebSocket?.Dispose();
-
-        await Task.Delay(10000, _dispose.Token);
-
-        OsTask.Run(ConnectAsync, _dispose.Token);
+        
+        await Reconnect();
     }
     
     DateTime lastMessage = DateTime.UtcNow;

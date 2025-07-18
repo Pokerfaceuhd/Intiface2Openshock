@@ -3,7 +3,7 @@
 public class ShockerConnectionConfig
 {
     public SerialConfig Serial { get; set; } = new();
-    public ShockerConnectionType Type { get; set; } = ShockerConnectionType.Serial;
+    public ShockerConnectionType Type { get; set; } = ShockerConnectionType.LiveControl;
 }
 
 public enum ShockerConnectionType : byte

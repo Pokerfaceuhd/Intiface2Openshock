@@ -1,13 +1,66 @@
 ﻿@using Intiface2Openshock.Config
+@using Intiface2Openshock.Services
+@using LucHeart.WebsocketLibrary
 @using OpenShock.Desktop.ModuleBase
 @using OpenShock.Desktop.ModuleBase.Config
+@implements IAsyncDisposable
 
 @page "/dash/intifaceConnection"
 
-<MudPaper Outlined="true" Class="rounded-lg mud-paper-padding d-flex" Style="position: relative; flex-direction: column">
+<MudPaper Outlined="true" Class="rounded-lg mud-paper-padding d-flex" Style="position: relative; flex-direction: column"
+          xmlns="http://www.w3.org/1999/html">
+    <MudText>Intiface Protocol</MudText>
+    <MudButton Disabled="FlowManager.State.Value != WebsocketConnectionState.Disconnected" OnClick="FlowManager.IntifaceConnection!.InitializeAsync" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Cable">Reconnect</MudButton>
+    <MudSelect T="IntifaceProtocolType" Variant="Variant.Outlined" @bind-Value="@ModuleConfig.Config.IntifaceConnection.ProtocolType" Label="Protocol Type" @bind-Value:after="ValueChangedCallback">
+        @foreach (var type in Enum.GetValues(typeof(IntifaceProtocolType)).Cast<IntifaceProtocolType>())
+        {
+            <MudSelectItem Value="@type">@type</MudSelectItem>
+        }
+    </MudSelect>
+    <MudTextField Class="option-width" Variant="Variant.Filled" @bind-Value="ModuleConfig.Config.IntifaceConnection.Port" Label="Intiface Port" @bind-Value:after="ValueChangedCallback"/>
+    <br/>
+    <MudPaper Outlined="true" Class="rounded-lg mud-paper-padding d-flex" Style="position: relative; flex-direction: column">
+        <MudText>Intiface Startup</MudText>
+        <MudDivider/>
+        <MudTextField Class="option-width" Variant="Variant.Filled" @bind-Value="ModuleConfig.Config.IntifaceConnection.StartupMessage.identifier" Label="Identifier" @bind-Value:after="ValueChangedCallback"/>
+        <MudTextField Class="option-width" Variant="Variant.Filled" @bind-Value="ModuleConfig.Config.IntifaceConnection.StartupMessage.address" Label="Address" @bind-Value:after="ValueChangedCallback"/>
+        <MudTextField Class="option-width" Variant="Variant.Filled" @bind-Value="ModuleConfig.Config.IntifaceConnection.StartupMessage.version" Label="Version" @bind-Value:after="ValueChangedCallback"/>
+    </MudPaper>
+    <br/>
+    <div>
+        <MudIcon Color="GetConnectionStateColor(FlowManager.State.Value)" Icon="@Icons.Material.Filled.CheckCircle"></MudIcon>
+        @FlowManager.State.Value
+    </div>
     
 </MudPaper>
 
 @code{
     [ModuleInject] private IModuleConfig<Intiface2OpenshockConfig> ModuleConfig { get; set; } = null!;
+    [ModuleInject] private FlowManager FlowManager { get; set; } = null!;
+    
+    private IAsyncDisposable _flowUpdatedSubscription = null!;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _flowUpdatedSubscription = await FlowManager.State.Updated.SubscribeAsync(state => InvokeAsync(StateHasChanged));
+    }
+    
+    private void ValueChangedCallback()
+    {
+        ModuleConfig.SaveDeferred();
+    }
+    
+    private static Color GetConnectionStateColor(WebsocketConnectionState state) =>
+        state switch
+        {
+            WebsocketConnectionState.Connected => Color.Success,
+            WebsocketConnectionState.Connecting => Color.Warning,
+            WebsocketConnectionState.WaitingForReconnect => Color.Tertiary,
+            _ => Color.Error
+        };
+    
+    public async ValueTask DisposeAsync()
+    {
+        await _flowUpdatedSubscription.DisposeAsync();
+    }
 }

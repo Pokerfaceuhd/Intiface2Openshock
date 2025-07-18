@@ -4,7 +4,7 @@ public sealed class IntifaceConnectionConfig
 {
     public IntifaceConnectionStartupMessage StartupMessage { get; set; } = new();
     public ushort Port { get; set; } = 54817;
-    public IntifaceProtocolType ProtocolType { get; set; } = IntifaceProtocolType.Lovense;
+    public IntifaceProtocolType ProtocolType { get; set; } = IntifaceProtocolType.JoyHubV1;
 }
 
 public sealed class IntifaceConnectionStartupMessage
@@ -19,5 +19,6 @@ public sealed class IntifaceConnectionStartupMessage
 
 public enum IntifaceProtocolType: byte
 {
-    Lovense = 0
+    Lovense = 0,
+    JoyHubV1 = 1
 }

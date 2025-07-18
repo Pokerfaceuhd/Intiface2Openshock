@@ -137,14 +137,23 @@ public sealed class FlowManager
     {
         var protocolOutput = _usedProtocolType switch
         {
-            IntifaceProtocolType.Lovense => await LovenseProtocol(data),
+            IntifaceProtocolType.Lovense => LovenseProtocol(data),
+            IntifaceProtocolType.JoyHubV1 => JoyHubV1Protocol(data),
             _ => null
         };
         _liveControlUpdate.OnNext(0);
         return protocolOutput;
     }
+
+    private byte[]? JoyHubV1Protocol(byte[] data)
+    {
+        var intensity = (byte)(data[2] / 255f * 100);
+        _logger.LogInformation("JoyHub v1 protocol {Intensity}", intensity);
+        LiveControlIntensity = intensity;
+        return null;
+    }
     
-    private async Task<byte[]?> LovenseProtocol(byte[] buffer)
+    private byte[]? LovenseProtocol(byte[] buffer)
     {
         string message = Encoding.UTF8.GetString(buffer);
         
