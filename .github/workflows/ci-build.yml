@@ -39,7 +39,7 @@ jobs:
 
       - name: Publish Intiface2Openshock
     
-        run: dotnet publish Intiface2OpenShock/Intiface2OpenShock.csproj -c Release -o ./publish/
+        run: dotnet publish Intiface2Openshock/Intiface2Openshock.csproj -c Release -o ./publish/
 
       - name: Upload LocalRelay artifacts
         uses: actions/upload-artifact@v4
