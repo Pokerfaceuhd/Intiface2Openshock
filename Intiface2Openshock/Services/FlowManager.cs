@@ -124,11 +124,15 @@ public sealed class FlowManager
                                     Intensity = LiveControlIntensity,
                                     Model = (ShockerModelType)(byte)shocker.Model,
                                     Type = (ShockerCommandType)(byte)_config.Config.Shocker.Type,
-                                    DurationMs = 150
+                                    DurationMs = 250
                                 })));
-                        await Task.Delay(130);
+                        await Task.Delay(100);
                         break;
                 }
+            }
+            else
+            {
+                await Task.Delay(40);
             }
         }
     }
