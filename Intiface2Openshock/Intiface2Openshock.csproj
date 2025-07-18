@@ -49,8 +49,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Resources\LocalRelay-Icon.png" />
-      <EmbeddedResource Include="Resources\LocalRelay-Icon.png" />
+      <None Remove="Resources\Intiface2Openshock-Icon.png" />
+        <EmbeddedResource Include="Resources\Intiface2Openshock-Icon.png" />
     </ItemGroup>
     
     <PropertyGroup>

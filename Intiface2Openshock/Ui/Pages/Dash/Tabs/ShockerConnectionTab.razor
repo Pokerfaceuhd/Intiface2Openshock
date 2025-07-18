@@ -1,0 +1,78 @@
+﻿@using OpenShock.Desktop.ModuleBase
+@using OpenShock.Desktop.ModuleBase.Config
+@using Intiface2Openshock.Config
+@using Intiface2Openshock.Services
+@implements IAsyncDisposable
+
+@page "/dash/shockerConnection"
+
+<MudPaper Outlined="true" Class="rounded-lg mud-paper-padding d-flex" Style="position: relative; flex-direction: column">
+    
+    <MudPaper Outlined="true" Class="rounded-lg mud-paper-padding-margin">
+        <MudSelect T="ShockerConnectionType" Variant="Variant.Outlined" @bind-Value="@ModuleConfig.Config.ShockerConnection.Type" Label="Connection Type" @bind-Value:after="ValueChangedCallback">
+            @foreach (var type in Enum.GetValues(typeof(ShockerConnectionType)).Cast<ShockerConnectionType>())
+            {
+                <MudSelectItem Value="@type">@type</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSlider Disabled="true" Max="100" Value="FlowManager.LiveControlIntensity" Variant="Variant.Outlined">Intensity</MudSlider>
+    </MudPaper>
+
+    @if (ModuleConfig.Config.ShockerConnection.Type == ShockerConnectionType.Serial)
+    {
+        <MudButton OnClick="RefreshSerialPorts" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Refresh" Color="Color.Primary" Style="margin-right: 10px;">Refresh Serial Ports</MudButton>
+        <MudSelect T="string?" Variant="Variant.Outlined" @bind-Value="_selectedSerialPort" Label="Serial Port" @bind-Value:after="SelectedSerialPortChanged">
+            <MudSelectItem Value="@string.Empty">None</MudSelectItem>
+            @foreach (var port in _serialPorts)
+            {
+                <MudSelectItem Value="@port">@port</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudCheckBox @bind-Value="@ModuleConfig.Config.ShockerConnection.Serial.AutoConnect" @bind-Value:after="ValueChangedCallback">Auto Connect</MudCheckBox>
+    }
+</MudPaper>
+
+@code {
+    [ModuleInject] private FlowManager FlowManager { get; set; } = null!;
+    [ModuleInject] private SerialService SerialService { get; set; } = null!;
+    [ModuleInject] private IModuleConfig<Intiface2OpenshockConfig> ModuleConfig { get; set; } = null!;
+    
+    private string? _selectedSerialPort;
+    private string[] _serialPorts = [];
+    private IAsyncDisposable _intensityUpdateSubscription = null!;
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        _selectedSerialPort = ModuleConfig.Config.ShockerConnection.Serial.Port;
+        RefreshSerialPorts();
+        _intensityUpdateSubscription = await FlowManager.OnLiveControlUpdate.SubscribeAsync(() => InvokeAsync(StateHasChanged));
+    }
+    
+    private void RefreshSerialPorts()
+    {
+        _serialPorts = SerialService.GetSerialPorts();
+    }
+
+    private async Task SelectedSerialPortChanged()
+    {
+        var serialConfig = ModuleConfig.Config.ShockerConnection.Serial;
+        
+        serialConfig.Port = _selectedSerialPort;
+        await ModuleConfig.Save();
+        
+        await FlowManager.ConnectSerialPort(_selectedSerialPort);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _intensityUpdateSubscription.DisposeAsync();
+    }
+
+    private void ValueChangedCallback()
+    {
+        ModuleConfig.SaveDeferred();
+    }
+
+}

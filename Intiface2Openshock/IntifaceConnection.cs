@@ -1,5 +1,4 @@
 ﻿using System.Net.WebSockets;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using Intiface2Openshock.Utils;
@@ -8,12 +7,9 @@ using Microsoft.Extensions.Logging;
 using OneOf;
 using OneOf.Types;
 using OpenShock.Desktop.ModuleBase.Config;
-using OpenShock.Desktop.ModuleBase.StableInterfaces;
 using Intiface2Openshock.Config;
-using Intiface2Openshock.Utils;
 using OpenShock.SDK.CSharp.Updatables;
 using OpenShock.SDK.CSharp.Utils;
-using OpenShock.Serialization.Gateway;
 
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
@@ -90,7 +86,6 @@ public sealed class IntifaceConnection : IAsyncDisposable
             _connectedAt = DateTimeOffset.UtcNow;
 
             String json = JsonSerializer.Serialize(_config.Config.IntifaceConnection.StartupMessage);
-            _logger.LogInformation("Starting Intiface connection with: {Json}", json);
             SendUtf8(json);
             
             OsTask.Run(ReceiveLoop, _linked.Token);
@@ -120,7 +115,6 @@ public sealed class IntifaceConnection : IAsyncDisposable
     private async Task SendUtf8(string message)
     {
         var buffer = Encoding.UTF8.GetBytes(message);
-        _logger.LogInformation("Sending UTF8 message: {Message}", message);
         await _clientWebSocket!.SendAsync(buffer, WebSocketMessageType.Text, true, _linked.Token);
     }
     
@@ -182,7 +176,7 @@ public sealed class IntifaceConnection : IAsyncDisposable
             return;
         }
 
-        _logger.LogWarning("Lost websocket connection, trying to reconnect in 3 seconds");
+        _logger.LogWarning("Lost websocket connection, trying to reconnect in 10 seconds");
         _state.Value = WebsocketConnectionState.Connecting;
 
         _clientWebSocket?.Abort();

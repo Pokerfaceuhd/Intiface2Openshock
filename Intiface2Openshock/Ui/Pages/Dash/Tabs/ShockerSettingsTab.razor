@@ -1,4 +1,4 @@
-﻿@inject ILogger<SerialTab> Logger
+﻿@inject ILogger<ShockerConnectionTab> Logger
 @using LucHeart.WebsocketLibrary
 @using Microsoft.Extensions.Logging
 @using OpenShock.Desktop.ModuleBase
@@ -6,6 +6,7 @@
 @using OpenShock.Desktop.ModuleBase.Config
 @using Intiface2Openshock.Config
 @using Intiface2Openshock.Services
+@using OpenShock.Desktop.ModuleBase.Models
 @implements IAsyncDisposable
 
 @page "/dash/settings"
@@ -25,6 +26,12 @@
             </RowTemplate>
         </MudTable>
     </MudPaper>
+    <MudSelect T="ControlType" Variant="Variant.Outlined" @bind-Value="@ModuleConfig.Config.Shocker.Type" Label="Control Type" @bind-Value:after="SaveConfig">
+        @foreach (var type in Enum.GetValues(typeof(ControlType)).Cast<ControlType>())
+        {
+            <MudSelectItem Value="@type">@type</MudSelectItem>
+        }
+    </MudSelect>
     <div>
         <MudIcon Color="GetConnectionStateColor(FlowManager.State.Value)" Icon="@Icons.Material.Filled.CheckCircle"></MudIcon>
         @FlowManager.State.Value
@@ -51,6 +58,11 @@
     private void OnSelectedShockersUpdate()
     {
         ModuleConfig.Config.Shocker.Shockers = _selectedShockers.ToList();
+        ModuleConfig.SaveDeferred();
+    }
+    
+    private void SaveConfig()
+    {
         ModuleConfig.SaveDeferred();
     }
     

@@ -1,0 +1,13 @@
+﻿@using Intiface2Openshock.Config
+@using OpenShock.Desktop.ModuleBase
+@using OpenShock.Desktop.ModuleBase.Config
+
+@page "/dash/intifaceConnection"
+
+<MudPaper Outlined="true" Class="rounded-lg mud-paper-padding d-flex" Style="position: relative; flex-direction: column">
+    
+</MudPaper>
+
+@code{
+    [ModuleInject] private IModuleConfig<Intiface2OpenshockConfig> ModuleConfig { get; set; } = null!;
+}

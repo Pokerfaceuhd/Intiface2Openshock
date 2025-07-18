@@ -1,6 +1,5 @@
 ﻿using System.Buffers;
 using System.IO.Ports;
-using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text;
 using System.Text.Json;
@@ -10,7 +9,6 @@ using Intiface2Openshock.Utils;
 using Microsoft.Extensions.Logging;
 using Intiface2Openshock.Models.Serial;
 using OpenShock.MinimalEvents;
-using OpenShock.Serialization.Types;
 
 namespace Intiface2Openshock;
 
@@ -40,11 +38,6 @@ public sealed class SerialPortClient : IAsyncDisposable
     {
         _logger = logger;
         _linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_disposeCts.Token);
-
-        _terminalUpdate.Throttle(TimeSpan.FromMilliseconds(20)).Subscribe(u =>
-        {
-            OsTask.Run(() => _onConsoleBufferUpdate.InvokeAsyncParallel());
-        });
         
         _serialPort = new SerialPort
         {
@@ -64,8 +57,7 @@ public sealed class SerialPortClient : IAsyncDisposable
         if (_currentCts != null) await _currentCts.CancelAsync();
         _linkedCts.Dispose();
         _currentCts?.Dispose();
-
-
+        
         _currentCts = new CancellationTokenSource();
         _linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_disposeCts.Token, _currentCts.Token);
 

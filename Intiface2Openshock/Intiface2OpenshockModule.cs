@@ -15,21 +15,27 @@ namespace Intiface2Openshock;
 
 public class Intiface2OpenshockModule : DesktopModuleBase
 {
-    public override string IconPath => "OpenShock/Intiface2Openshock/Resources/Intiface2Openshock-Icon.png";
+    public override string IconPath => "Intiface2Openshock/Resources/Intiface2Openshock-Icon.png";
 
     public override IReadOnlyCollection<NavigationItem> NavigationComponents { get; } =
     [
         new()
         {
-            Name = "Settings",
-            ComponentType = typeof(SettingsTab),
-            Icon = IconOneOf.FromSvg(Icons.Material.Filled.Hub)
+            Name = "Shocker Settings",
+            ComponentType = typeof(ShockerSettingsTab),
+            Icon = IconOneOf.FromSvg(Icons.Material.Filled.ElectricBolt)
         },
         new()
         {
-            Name = "Serial",
-            ComponentType = typeof(SerialTab),
-            Icon = IconOneOf.FromSvg(Icons.Material.Filled.VoiceChat)
+            Name = "Shocker Connection",
+            ComponentType = typeof(ShockerConnectionTab),
+            Icon = IconOneOf.FromSvg(Icons.Material.Filled.Cable)
+        },
+        new ()
+        {
+            Name = "Intiface Connection",
+            ComponentType = typeof(IntifaceConnectionTab),
+            Icon = IconOneOf.FromSvg(Icons.Material.Filled.Link)
         }
     ];
 

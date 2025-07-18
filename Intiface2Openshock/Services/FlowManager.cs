@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Reactive.Linq;
 using System.Text;
 using LucHeart.WebsocketLibrary;
 using Microsoft.Extensions.Logging;
@@ -8,11 +9,10 @@ using Intiface2Openshock.Config;
 using Intiface2Openshock.Models.Serial;
 using Intiface2Openshock.Utils;
 using OpenShock.MinimalEvents;
-using OpenShock.SDK.CSharp.Models;
 using OpenShock.SDK.CSharp.Updatables;
-using OpenShock.Serialization.Gateway;
 using OpenShock.Serialization.Types;
 using ShockerModelType = OpenShock.Serialization.Types.ShockerModelType;
+using System.Reactive.Subjects;
 
 namespace Intiface2Openshock.Services;
 
@@ -24,13 +24,14 @@ public sealed class FlowManager
     private readonly ILogger<SerialPortClient> _serialPortClientLogger;
     private readonly IOpenShockService _openShockService;
 
-    private byte _liveControlIntensity;
+    public byte LiveControlIntensity;
+    private readonly Subject<byte> _liveControlUpdate = new();
+    public IAsyncMinimalEventObservable OnLiveControlUpdate => _onLiveControlUpdate;
+    private readonly AsyncMinimalEvent _onLiveControlUpdate = new();
+    
     
     public IntifaceConnection? IntifaceConnection { get; private set; } = null;
     public SerialPortClient? SerialPortClient { get; private set; } = null;
-    
-    public IAsyncMinimalEventObservable OnConsoleBufferUpdate => _onConsoleBufferUpdate;
-    private readonly AsyncMinimalEvent _onConsoleBufferUpdate = new();
 
     private IntifaceProtocolType _usedProtocolType;
     
@@ -54,6 +55,10 @@ public sealed class FlowManager
 
     public async Task LoadConfigAndStart()
     {
+        _liveControlUpdate.Throttle(TimeSpan.FromMilliseconds(20)).Subscribe(u =>
+        {
+            OsTask.Run(() => _onLiveControlUpdate.InvokeAsyncParallel());
+        });
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         OsTask.Run(LiveControlLoop);
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
@@ -82,17 +87,16 @@ public sealed class FlowManager
         
         _usedProtocolType = _config.Config.IntifaceConnection.ProtocolType;
         
-        _logger.LogInformation("Intiface connection starting on Port: {ConfigPort}", _config.Config.Port);
         IntifaceConnection =
-            new IntifaceConnection(new Uri($"ws://{IPAddress.Loopback.ToString()}:{_config.Config.Port}"), _intifaceConnectionLogger, _config);
+            new IntifaceConnection(new Uri($"ws://{IPAddress.Loopback.ToString()}:{_config.Config.IntifaceConnection.Port}"), _intifaceConnectionLogger, _config);
         IntifaceConnection.HandleMessage += OnProtocolMessage;
         await IntifaceConnection.State.Updated.SubscribeAsync(state =>
         {
             _state.Value = state;
-            _liveControlIntensity = 0;
+            LiveControlIntensity = 0;
             return Task.CompletedTask;
         }).ConfigureAwait(false);
-
+        
         await IntifaceConnection.InitializeAsync().ConfigureAwait(false);
     }
 
@@ -100,13 +104,14 @@ public sealed class FlowManager
     {
         while (true)
         {
-            if (_liveControlIntensity != 0)
+            if (LiveControlIntensity != 0)
             {
                 switch (_config.Config.ShockerConnection.Type)
                 {
                     case ShockerConnectionType.LiveControl:
-                        _openShockService.Control.LiveControl(_config.Config.Shocker.Shockers, _liveControlIntensity,
+                        _openShockService.Control.LiveControl(_config.Config.Shocker.Shockers, LiveControlIntensity,
                             _config.Config.Shocker.Type);
+                        await Task.Delay(40);
                         break;
                     case ShockerConnectionType.Serial:
                         if (SerialPortClient == null) return;
@@ -116,25 +121,27 @@ public sealed class FlowManager
                                 .Select(shocker => SerialPortClient.Control(new RfTransmit
                                 {
                                     Id = shocker.RfId,
-                                    Intensity = _liveControlIntensity,
+                                    Intensity = LiveControlIntensity,
                                     Model = (ShockerModelType)(byte)shocker.Model,
                                     Type = (ShockerCommandType)(byte)_config.Config.Shocker.Type,
-                                    DurationMs = 200
+                                    DurationMs = 150
                                 })));
+                        await Task.Delay(130);
                         break;
                 }
             }
-            await Task.Delay(20);
         }
     }
     
     private async Task<byte[]?> OnProtocolMessage(byte[] data)
     {
-        return _usedProtocolType switch
+        var protocolOutput = _usedProtocolType switch
         {
             IntifaceProtocolType.Lovense => await LovenseProtocol(data),
             _ => null
         };
+        _liveControlUpdate.OnNext(0);
+        return protocolOutput;
     }
     
     private async Task<byte[]?> LovenseProtocol(byte[] buffer)
@@ -143,9 +150,10 @@ public sealed class FlowManager
         
         if (message.StartsWith("Vibrate:"))
         {
-            _liveControlIntensity = (byte)message
+            LiveControlIntensity = (byte)(5 * message
                 .Where(char.IsDigit)
-                .Aggregate(0, (total, c) => total * 10 + (c - '0'));
+                .Aggregate(0, (total, c) => total * 10 + (c - '0')));
+
         }
         else if (message.StartsWith("DeviceType;"))
         {
@@ -172,7 +180,6 @@ public sealed class FlowManager
         if(string.IsNullOrWhiteSpace(portName)) return;
         
         SerialPortClient = new SerialPortClient(_serialPortClientLogger, portName);
-        _onConsoleBufferUpdateDisposable = await SerialPortClient.OnConsoleBufferUpdate.SubscribeAsync(_onConsoleBufferUpdate.InvokeAsyncParallel);
         await SerialPortClient.Open();
     }
 }
